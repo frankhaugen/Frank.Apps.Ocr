@@ -1,0 +1,119 @@
+﻿@page "/"
+@using System.Text
+@using System.Text.Json
+
+@inject IHttpClientFactory HttpClientFactory
+@inject ILogger<Home> Logger
+@inject IDialogService DialogService
+
+
+<MudText Typo="Typo.h6">MudBlazor is @Text</MudText>
+
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ButtonOnClick">@ButtonText</MudButton>
+
+<MudFileUpload T="IBrowserFile" FilesChanged="UploadFilesAsync" SuppressOnChangeWhenInvalid="true" Accept=".pdf">
+    <MudButton HtmlTag="label"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.CloudUpload">
+        
+    </MudButton>
+</MudFileUpload>
+
+<p>
+    @if (_ocrResponse != null)
+    {
+        <div>
+            <h3>OCR Result</h3>
+            <p><strong>Page Number:</strong> @_ocrResponse.PageNumber</p>
+            <p><strong>Mean Confidence:</strong> @_ocrResponse.MeanConfidence</p>
+            <p><strong>Text:</strong> @_ocrResponse.Text</p>
+            <p><strong>HOcr Text:</strong> @_ocrResponse.HOcrText</p>
+            <p><strong>Unlv Text:</strong> @_ocrResponse.UnlvText</p>
+            <p><strong>Alto Text:</strong> @_ocrResponse.AltoText</p>
+            <p><strong>Tsv Text:</strong> @_ocrResponse.TsvText</p>
+            <p><strong>Word Boxes:</strong> @_ocrResponse.WordBoxes</p>
+            <p><strong>Box Text:</strong> @_ocrResponse.BoxText</p>
+            <p><strong>Lstm Box Text:</strong> @_ocrResponse.LstmBoxText</p>
+        </div>
+    }
+</p>
+
+@code {
+    private OcrResponse? _ocrResponse;
+    
+    public string Text { get; set; } = "????";
+    public string ButtonText { get; set; } = "Upload File";
+    
+    private async Task UploadFilesAsync(IBrowserFile? browserFile)
+    {
+        Logger.LogInformation("Uploading file...");
+        Console.WriteLine("Uploading file...");
+        if (browserFile != null)
+        {
+            await using var stream = browserFile.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10);
+            using var memoryStream = new MemoryStream();
+            await browserFile.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            var fileName = browserFile.Name;
+            var fileBytes = memoryStream.ToArray();
+            var client = HttpClientFactory.CreateClient("OcrApi");
+            
+            var jsonContentRequest = new StringContent(JsonSerializer.Serialize(new FileUploadRequest
+            {
+                Base64String = Convert.ToBase64String(fileBytes),
+                FileName = fileName
+            }, new JsonSerializerOptions(JsonSerializerDefaults.Web)), Encoding.UTF8, "application/json");
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "Ocr")
+            {
+                Content = jsonContentRequest
+            };
+
+            using var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<OcrResponse?>(new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                
+            _ocrResponse = body;
+        }
+        
+        StateHasChanged();
+    }
+    
+    public class FileUploadRequest
+    {
+        public string Base64String { get; set; } = null!;
+
+        public string FileName { get; set; } = null!;
+    }
+
+    public class OcrResponse
+    {
+        public int? PageNumber { get; set; }
+        public float? MeanConfidence { get; set; }
+        public string? Text { get; set; }
+        public string? HOcrText { get; set; }
+        public string? UnlvText { get; set; }
+        public string? AltoText { get; set; }
+        public string? TsvText { get; set; }
+        public string? WordBoxes { get; set; }
+        public string? BoxText { get; set; }
+        public string? LstmBoxText { get; set; }
+    }
+
+
+    private async Task ButtonOnClick()
+    {
+        var dialogReference = await DialogService.ShowAsync<FileUploadDialog>();
+    }
+
+    /// <summary>
+    /// Dialog for file upload.
+    /// </summary>
+    private class FileUploadDialog : MudComponentBase
+    {
+        
+    }
+
+}
