@@ -1,4 +1,4 @@
-using Frank.Apps.Ocr.WebApp.Components;
+using Frank.Apps.Ocr.LegacyWebApp.Components;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,10 +21,10 @@ builder.Services.AddHttpClient("OcrApi", client =>
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.Run();
+app.Run(); 

@@ -4,7 +4,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frank.Apps.Ocr.Api", "Frank.Apps.Ocr.Api\Frank.Apps.Ocr.Api.csproj", "{CC5F1731-4B59-4CD0-ADD0-4EB3B99B446D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frank.Apps.Ocr.WebApp", "Frank.Apps.Ocr.WebApp\Frank.Apps.Ocr.WebApp.csproj", "{49AC6DF5-A5B1-4C56-977A-BEFC7D6B725A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frank.Apps.Ocr.LegacyWebApp", "Frank.Apps.Ocr.LegacyWebApp\Frank.Apps.Ocr.LegacyWebApp.csproj", "{49AC6DF5-A5B1-4C56-977A-BEFC7D6B725A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{012B2523-DE73-4D56-B1D7-1630CD11D8F3}"
 	ProjectSection(SolutionItems) = preProject
