@@ -1,0 +1,12 @@
+﻿@inherits MudComponentBase
+
+<MudPaper Class="pdf-container">
+    <iframe src="@PdfDataUrl" class="pdf-frame" type="application/pdf"></iframe>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public byte[]? FileContent { get; set; }
+
+    private string PdfDataUrl => $"data:application/pdf;base64,{Convert.ToBase64String(FileContent ?? [])}";
+}

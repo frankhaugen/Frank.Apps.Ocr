@@ -1,0 +1,96 @@
+﻿@using Frank.Apps.Ocr.WebApp.Models.AltoXml
+@using Gotho.BlazorPdf
+@inherits MudComponentBase
+
+<MudPaper Class="pdf-container" Style="position: relative;">
+    <PdfViewer Url="@PdfDataUrl" Height="100%" OnDocumentLoaded="@DocumentLoaded" OnPageChanged="@PageChanged" />
+    <div id="pdf-viewer-overlay">
+        @foreach (var overlay in PageOverlays)
+        {
+            <MudElement
+                Class="ocr-overlay"
+                Style="@overlay.ToStyleString()" />
+        }
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public byte[]? FileContent { get; set; }
+
+    [Parameter]
+    public Alto? AltoData { get; set; }
+
+    private string PdfDataUrl => $"data:application/pdf;base64,{Convert.ToBase64String(FileContent ?? Array.Empty<byte>())}";
+
+    private List<OcrOverlay> OcrOverlays = new();
+    
+    private List<OcrOverlay> PageOverlays = new();
+
+    protected override void OnParametersSet()
+    {
+        GenerateOcrOverlays();
+    }
+
+    private void GenerateOcrOverlays()
+    {
+        OcrOverlays.Clear();
+
+        if (AltoData?.Layout?.Page == null)
+            return;
+
+        foreach (var page in AltoData.Layout.Page)
+        {
+            foreach (var block in page.PrintSpace.ComposedBlock)
+            {
+                foreach (var textBlock in block.TextBlock)
+                {
+                    foreach (var textLine in textBlock.TextLine)
+                    {
+                        foreach (var str in textLine.String)
+                        {
+                            OcrOverlays.Add(new OcrOverlay
+                            {
+                                Page = int.Parse(page.PHYSICAL_IMG_NR),
+                                Left = double.TryParse(str.HPOS, out var left) ? left : 0,
+                                Top = double.TryParse(str.VPOS, out var top) ? top : 0,
+                                Width = double.TryParse(str.WIDTH, out var width) ? width : 0,
+                                Height = double.TryParse(str.HEIGHT, out var height) ? height : 0,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        SelectOverlays(1);
+    }
+    
+    public class OcrOverlay
+    {
+        public int Page { get; set; }
+        public double Left { get; set; }
+        public double Top { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+        public string BackgroundColor { get; set; } = "rgba(255, 255, 0, 0.3)";
+
+        public string ToStyleString()
+        {
+            return $"position: absolute; " +
+                   $"left: {Left}px; " +
+                   $"top: {Top}px; " +
+                   $"width: {Width}px; " +
+                   $"height: {Height}px; " +
+                   $"background-color: {BackgroundColor};";
+        }
+    }
+
+    private void DocumentLoaded(PdfViewerEventArgs obj) => SelectOverlays(obj.CurrentPage);
+    private void PageChanged(PdfViewerEventArgs obj) => SelectOverlays(obj.CurrentPage);
+
+    private void SelectOverlays(int objCurrentPage) =>
+        PageOverlays = OcrOverlays
+            .Where(x => x.Page == objCurrentPage)
+            .ToList();
+}
