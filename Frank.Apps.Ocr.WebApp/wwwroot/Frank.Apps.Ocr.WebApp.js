@@ -1,67 +1,70 @@
-﻿export async function renderPdfWithOcr(pdfDataBase64, altoData) {
-    const pdfData = atob(pdfDataBase64);
-    const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-    const pdf = await loadingTask.promise;
+﻿window.pdfViewer = {
+    pdfDoc: null,
+    currentPage: 1,
+    totalPages: 0,
+    scale: 1.0,
+    canvas: null,
+    ctx: null,
 
-    const viewer = document.getElementById('pdfViewer');
-    viewer.innerHTML = '';
+    loadPdf: async function (base64Data, canvasId) {
+        const loadingTask = pdfjsLib.getDocument({ data: atob(base64Data) });
+        this.pdfDoc = await loadingTask.promise;
+        this.totalPages = this.pdfDoc.numPages;
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        await this.renderPage(this.currentPage);
+        return this.totalPages;
+    },
 
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1.5 });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const context = canvas.getContext('2d');
+    renderPage: async function (num) {
+        const page = await this.pdfDoc.getPage(num);
+        const viewport = page.getViewport({ scale: this.scale });
+        this.canvas.height = viewport.height;
+        this.canvas.width = viewport.width;
 
         const renderContext = {
-            canvasContext: context,
+            canvasContext: this.ctx,
             viewport: viewport
         };
         await page.render(renderContext).promise;
+    },
 
-        const overlay = document.createElement('div');
-        overlay.className = 'ocr-overlay';
-        overlay.style.position = 'absolute';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = `${viewport.width}px`;
-        overlay.style.height = `${viewport.height}px`;
-        overlay.style.pointerEvents = 'none';
+    nextPage: async function () {
+        if (this.currentPage >= this.totalPages) return;
+        this.currentPage++;
+        await this.renderPage(this.currentPage);
+    },
 
-        // Assuming altoData.Layout.Page[pageNum - 1] corresponds to the current page
-        const altoPage = altoData.Layout.Page[pageNum - 1];
-        const printSpace = altoPage.PrintSpace;
+    prevPage: async function () {
+        if (this.currentPage <= 1) return;
+        this.currentPage--;
+        await this.renderPage(this.currentPage);
+    },
 
-        for (const composedBlock of printSpace.ComposedBlock) {
-            for (const textBlock of composedBlock.TextBlock) {
-                for (const textLine of textBlock.TextLine) {
-                    for (const word of textLine.String) {
-                        const wordDiv = document.createElement('div');
-                        wordDiv.className = 'ocr-word';
-                        wordDiv.textContent = word.CONTENT;
-                        wordDiv.style.position = 'absolute';
-                        wordDiv.style.left = `${parseFloat(word.HPOS) * viewport.scale}px`;
-                        wordDiv.style.top = `${parseFloat(word.VPOS) * viewport.scale}px`;
-                        wordDiv.style.width = `${parseFloat(word.WIDTH) * viewport.scale}px`;
-                        wordDiv.style.height = `${parseFloat(word.HEIGHT) * viewport.scale}px`;
-                        wordDiv.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
-                        wordDiv.style.border = '1px solid rgba(255, 255, 0, 0.5)';
-                        overlay.appendChild(wordDiv);
-                    }
-                }
-            }
-        }
+    getCurrentPage: function () {
+        return this.currentPage;
+    },
+    
+    getPageRectangle: async function () {
+        const canvas = document.getElementById('pdfCanvas');
+        if (!canvas) return null;
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height
+        };
+    },
 
-        const pageContainer = document.createElement('div');
-        pageContainer.className = 'pdf-page-container';
-        pageContainer.style.position = 'relative';
-        pageContainer.style.width = `${viewport.width}px`;
-        pageContainer.style.height = `${viewport.height}px`;
-        pageContainer.appendChild(canvas);
-        pageContainer.appendChild(overlay);
+    getCurrentScale: function () {
+        return this.scale;
+    },
 
-        viewer.appendChild(pageContainer);
+    drawRectangleOnCanvas: function (rect) {
+        if (!this.ctx) return;
+        this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
     }
-}
+};

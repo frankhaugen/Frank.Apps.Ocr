@@ -1,0 +1,107 @@
+﻿@using Frank.Apps.Ocr.WebApp.Models
+@using Frank.Apps.Ocr.WebApp.Models.AltoXml
+@inject IJSRuntime JS
+
+<MudPaper Class="pdf-container" Style="position: relative;">
+    <canvas id="pdfCanvas"></canvas>
+    <MudButton OnClick="PrevPage">Previous</MudButton>
+    <MudButton OnClick="NextPage">Next</MudButton>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public byte[]? FileContent { get; set; }
+
+    [Parameter]
+    public Alto? AltoData { get; set; }
+
+    private List<OcrOverlay> OcrOverlays = new();
+    private int currentPage = 1;
+    private int totalPages = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && FileContent != null)
+        {
+            var base64Data = Convert.ToBase64String(FileContent);
+            totalPages = await JS.InvokeAsync<int>("pdfViewer.loadPdf", base64Data, "pdfCanvas");
+
+            GenerateOcrOverlays();
+            await RenderPageWithOverlays(currentPage);
+        }
+    }
+
+    private void GenerateOcrOverlays()
+    {
+        OcrOverlays.Clear();
+
+        if (AltoData?.Layout?.Page == null)
+            return;
+
+        foreach (var page in AltoData.Layout.Page)
+        {
+            foreach (var block in page.PrintSpace.ComposedBlock)
+            {
+                foreach (var textBlock in block.TextBlock)
+                {
+                    foreach (var textLine in textBlock.TextLine)
+                    {
+                        foreach (var str in textLine.String)
+                        {
+                            OcrOverlays.Add(new OcrOverlay
+                            {
+                                Page = int.Parse(page.PHYSICAL_IMG_NR),
+                                Left = double.TryParse(str.HPOS, out var left) ? left : 0,
+                                Top = double.TryParse(str.VPOS, out var top) ? top : 0,
+                                Width = double.TryParse(str.WIDTH, out var width) ? width : 0,
+                                Height = double.TryParse(str.HEIGHT, out var height) ? height : 0,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task RenderPageWithOverlays(int pageNumber)
+    {
+        await JS.InvokeVoidAsync("pdfViewer.renderPage", pageNumber);
+        var scale = await JS.InvokeAsync<double>("pdfViewer.getCurrentScale");
+
+        var overlays = OcrOverlays
+            .Where(x => x.Page == pageNumber)
+            .Select(x => new CanvasRect
+            {
+                X = x.Left * scale,
+                Y = x.Top * scale,
+                Width = x.Width * scale,
+                Height = x.Height * scale
+            })
+            .ToList();
+
+        foreach (var rect in overlays)
+        {
+            await JS.InvokeVoidAsync("pdfViewer.drawRectangleOnCanvas", rect);
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await RenderPageWithOverlays(currentPage);
+        }
+    }
+
+    private async Task PrevPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await RenderPageWithOverlays(currentPage);
+        }
+    }
+}

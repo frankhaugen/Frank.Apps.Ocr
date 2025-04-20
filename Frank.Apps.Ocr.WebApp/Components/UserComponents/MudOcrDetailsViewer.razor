@@ -1,0 +1,57 @@
+﻿@using Frank.Apps.Ocr.WebApp.Models
+
+@inherits MudComponentBase
+
+<div>
+    <h3>OCR Result</h3>
+    <div>
+        <h3>File Metadata</h3>
+        <p><strong>File Name:</strong> @OcrResponse.FileName</p>
+        <p><strong>Title:</strong> @OcrResponse.Title</p>
+        <p><strong>Author:</strong> @OcrResponse.Author</p>
+        <p><strong>Subject:</strong> @OcrResponse.Subject</p>
+        <p><strong>Keywords:</strong> @OcrResponse.Keywords</p>
+        <p><strong>Creator:</strong> @OcrResponse.Creator</p>
+        <p><strong>Producer:</strong> @OcrResponse.Producer</p>
+        <p><strong>Creation Date:</strong> @OcrResponse.CreationDate</p>
+    </div>
+    <hr/>
+    @foreach (var ocrResponsePage in OcrResponse.Pages)
+    {
+        <h3>Page Number: @ocrResponsePage.PageNumber</h3>
+        <p><strong>Mean Confidence:</strong> @ocrResponsePage.MeanConfidence</p>
+        <MudExpansionPanels MultiExpansion="true">
+            <MudExpansionPanel Text="Raw Text">
+                <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.Text</MudText>
+            </MudExpansionPanel>
+            <MudExpansionPanel Text="HOcr Text">
+                <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.HOcrText</MudText>
+            </MudExpansionPanel>
+            <MudExpansionPanel Text="Unlv Text">
+                <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.UnlvText</MudText>
+            </MudExpansionPanel>
+            <MudExpansionPanel Text="Alto Text">
+                <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.AltoText</MudText>
+            </MudExpansionPanel>
+            <MudExpansionPanel Text="Tsv Text">
+                <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.TsvText</MudText>
+            </MudExpansionPanel>
+            <MudExpansionPanel Text="Word Boxes">
+                <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.WordBoxes</MudText>
+            </MudExpansionPanel>
+            <MudExpansionPanel Text="Box Text">
+                <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.BoxText</MudText>
+            </MudExpansionPanel>
+            <MudExpansionPanel Text="Lstm Box Text">
+                <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.LstmBoxText</MudText>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+        <hr/>
+    }
+</div>
+
+@code {
+
+    [Parameter] public OcrResponses? OcrResponse { get; set; }
+
+}

@@ -1,0 +1,27 @@
+﻿@using BlazorMonaco
+@using BlazorMonaco.Editor
+@using BlazorMonaco.Languages
+
+@using Frank.Apps.Ocr.WebApp.Models
+
+@inherits MudComponentBase
+
+<StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="EditorConstructionOptions" CssClass="MudCodeEditor"  />
+
+@code {
+    [Parameter]
+    public string? Code { get; set; }
+    
+    [Parameter]
+    public string? Language { get; set; } = "javascript";
+    
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            AutomaticLayout = true,
+            Language = Language,
+            Value = Code
+        };
+    }
+}

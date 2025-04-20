@@ -8,6 +8,7 @@
     </PropertyGroup>
     
     <ItemGroup>
+        <PackageReference Include="BlazorMonaco" Version="3.3.0" />
         <PackageReference Include="Gotho.BlazorPdf.MudBlazor" Version="1.1.0" />
         <PackageReference Include="MudBlazor" Version="8.5.1" />
         <PackageReference Include="Syncfusion.PdfToImageConverter.Net" Version="29.1.38" />

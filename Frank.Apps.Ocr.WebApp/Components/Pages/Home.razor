@@ -3,12 +3,11 @@
 @using System.Text.Json
 @using Frank.Apps.Ocr.WebApp.Components.UserComponents
 @using Frank.Apps.Ocr.WebApp.Helpers
+@using Frank.Apps.Ocr.WebApp.Models
+@using BlazorMonaco.Editor
 
 @inject IHttpClientFactory HttpClientFactory
 @inject ILogger<Home> Logger
-@inject IDialogService DialogService
-
-
 
 <MudFileUpload T="IBrowserFile" OnFilesChanged="args => UploadFilesAsync(args.File)" Accept=".pdf" AppendMultipleFiles="false">
     <ActivatorContent>
@@ -20,68 +19,35 @@
     </ActivatorContent>
 </MudFileUpload>
 
-<MudStack Row="true">
-    @if (_fileContent != null && _ocrResponse != null)
-    {
-        <MudPaper Width="45%" Height="auto">
-            <MudAltoPdfViewer FileContent="@_fileContent" AltoData="OcrResponsesToAltoDocumentHelper.GetAltoDocument(_ocrResponse)" />
-            @* <MudSimplePdfViewer FileContent="@_fileContent" /> *@
-        </MudPaper>
-    }
+@if (_fileContent != null && _ocrResponse != null)
+{
+    <MudTabs>
+        <MudTabPanel Text="PDF" Icon="@Icons.Material.Filled.PictureAsPdf">
+            <MudStack Row="true" AlignItems="AlignItems.Start">
+                <MudPaper Width="45%" Height="70%">
+                    <MudTabs>
+                        <MudTabPanel Text="PDF.js" Icon="@Icons.Material.Filled.PictureAsPdf">
+                            <MudPdfJsViewer FileContent="@_fileContent" AltoData="OcrResponsesToAltoDocumentHelper.GetAltoDocument(_ocrResponse)"/>
+                        </MudTabPanel>
+                        <MudTabPanel Text="Gotho BlazorPdf" Icon="@Icons.Material.Filled.PictureAsPdf" Disabled="true">
+                            <MudAltoPdfViewer FileContent="@_fileContent" AltoData="OcrResponsesToAltoDocumentHelper.GetAltoDocument(_ocrResponse)" />
+                        </MudTabPanel>
+                        <MudTabPanel Text="Just open PDF in an IFrame" Icon="@Icons.Material.Filled.PictureAsPdf">
+                            <MudSimplePdfViewer FileContent="@_fileContent" />
+                        </MudTabPanel>
+                    </MudTabs>
+                </MudPaper>
+                <MudPaper Width="45%" Height="70%">
+                    <MudOcrDetailsViewer OcrResponse="_ocrResponse"/>
+                </MudPaper>
+            </MudStack>
+        </MudTabPanel>
 
-    @if (_ocrResponse != null)
-    {
-        <MudPaper Width="45%">
-            <div>
-                <h3>OCR Result</h3>
-                <div>
-                    <h3>File Metadata</h3>
-                    <p><strong>File Name:</strong> @_ocrResponse.FileName</p>
-                    <p><strong>Title:</strong> @_ocrResponse.Title</p>
-                    <p><strong>Author:</strong> @_ocrResponse.Author</p>
-                    <p><strong>Subject:</strong> @_ocrResponse.Subject</p>
-                    <p><strong>Keywords:</strong> @_ocrResponse.Keywords</p>
-                    <p><strong>Creator:</strong> @_ocrResponse.Creator</p>
-                    <p><strong>Producer:</strong> @_ocrResponse.Producer</p>
-                    <p><strong>Creation Date:</strong> @_ocrResponse.CreationDate</p>
-                </div>
-                <hr/>
-                @foreach (var ocrResponsePage in _ocrResponse.Pages)
-                {
-                    <h3>Page Number: @ocrResponsePage.PageNumber</h3>
-                    <p><strong>Mean Confidence:</strong> @ocrResponsePage.MeanConfidence</p>
-                    <MudExpansionPanels MultiExpansion="true">
-                        <MudExpansionPanel Text="Raw Text">
-                            <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.Text</MudText>
-                        </MudExpansionPanel>
-                        <MudExpansionPanel Text="HOcr Text">
-                            <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.HOcrText</MudText>
-                        </MudExpansionPanel>
-                        <MudExpansionPanel Text="Unlv Text">
-                            <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.UnlvText</MudText>
-                        </MudExpansionPanel>
-                        <MudExpansionPanel Text="Alto Text">
-                            <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.AltoText</MudText>
-                        </MudExpansionPanel>
-                        <MudExpansionPanel Text="Tsv Text">
-                            <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.TsvText</MudText>
-                        </MudExpansionPanel>
-                        <MudExpansionPanel Text="Word Boxes">
-                            <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.WordBoxes</MudText>
-                        </MudExpansionPanel>
-                        <MudExpansionPanel Text="Box Text">
-                            <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.BoxText</MudText>
-                        </MudExpansionPanel>
-                        <MudExpansionPanel Text="Lstm Box Text">
-                            <MudText Typo="Typo.body1" HtmlTag="pre" Color="Color.Default">@ocrResponsePage.LstmBoxText</MudText>
-                        </MudExpansionPanel>
-                    </MudExpansionPanels>
-                    <hr/>
-                }
-            </div>
-        </MudPaper>
-    }
-</MudStack>
+        <MudTabPanel Text="Alto" Icon="@Icons.Material.Filled.Code">
+            <StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="ConstructionOptions" CssClass="MudCodeEditor" />
+        </MudTabPanel>
+    </MudTabs>
+}
 
 @code {
     private OcrResponses? _ocrResponse;
@@ -106,19 +72,16 @@
 
             client.Timeout = TimeSpan.FromMinutes(10);
 
-
             var jsonContentRequest = new StringContent(JsonSerializer.Serialize(new FileUploadRequest
             {
                 Base64String = Convert.ToBase64String(fileBytes),
                 FileName = fileName
             }, new JsonSerializerOptions(JsonSerializerDefaults.Web)), Encoding.UTF8, "application/json");
 
-
             var request = new HttpRequestMessage(HttpMethod.Post, resourceUri)
             {
                 Content = jsonContentRequest
             };
-
 
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
             response.EnsureSuccessStatusCode();
@@ -130,45 +93,17 @@
         StateHasChanged();
     }
 
-    public class FileUploadRequest
-    {
-        public string Base64String { get; set; } = null!;
-
-        public string FileName { get; set; } = null!;
-    }
-
-    public class OcrResponse
-    {
-        public int? PageNumber { get; set; }
-        public float? MeanConfidence { get; set; }
-        public string? Text { get; set; }
-        public string? HOcrText { get; set; }
-        public string? UnlvText { get; set; }
-        public string? AltoText { get; set; }
-        public string? TsvText { get; set; }
-        public string? WordBoxes { get; set; }
-        public string? BoxText { get; set; }
-        public string? LstmBoxText { get; set; }
-    }
- /// <summary>
-    ///     Represents the response from the OCR service based on a PDF file.
-    /// </summary>
-    public class OcrResponses
-    {
-        /// File Metadata
-        public string FileName { get; set; } = string.Empty;
-
-        // PDF Metadata
-        public string? Title { get; set; }
-        public string? Author { get; set; }
-        public string? Subject { get; set; }
-        public string? Keywords { get; set; }
-        public string? Creator { get; set; }
-        public string? Producer { get; set; }
-        public string? CreationDate { get; set; }
-
-        // OCR Metadata
-        public List<OcrResponse> Pages { get; set; } = [];
-    }
+    private StandaloneEditorConstructionOptions ConstructionOptions(StandaloneCodeEditor arg) =>
+        new()
+        {
+            AutomaticLayout = true,
+            Language = "xml",
+            Value = OcrResponsesToAltoDocumentHelper.GetRawAltoDocument(_ocrResponse ?? new OcrResponses()),
+            Dimension = new Dimension() 
+            {
+                Width = 800,
+                Height = 1000
+            }
+        };
 
 }
