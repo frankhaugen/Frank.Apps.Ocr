@@ -66,5 +66,23 @@
         this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+    },
+    
+    drawRectangleOnCanvasWithScale: function (rect) {
+        if (!this.ctx) return;
+        // Get the canvas element as a canvas
+        const canvas = document.getElementsByClassName('blazorpdf-drawing__canvas')[0];
+        if (!canvas) return;
+        
+        // Calculate the scaled coordinates
+        const scale = this.getCurrentScale();
+        const canvasRect = canvas.getBoundingClientRect();
+        const x = (rect.x - canvasRect.left) / scale;
+        const y = (rect.y - canvasRect.top) / scale;
+        const width = rect.width / scale;
+        const height = rect.height / scale;
+        this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(x, y, width, height);
     }
 };

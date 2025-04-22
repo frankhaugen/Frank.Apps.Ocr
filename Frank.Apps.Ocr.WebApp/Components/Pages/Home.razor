@@ -21,32 +21,34 @@
 
 @if (_fileContent != null && _ocrResponse != null)
 {
-    <MudTabs>
-        <MudTabPanel Text="PDF" Icon="@Icons.Material.Filled.PictureAsPdf">
-            <MudStack Row="true" AlignItems="AlignItems.Start">
-                <MudPaper Width="45%" Height="70%">
-                    <MudTabs>
-                        <MudTabPanel Text="PDF.js" Icon="@Icons.Material.Filled.PictureAsPdf">
-                            <MudPdfJsViewer FileContent="@_fileContent" AltoData="OcrResponsesToAltoDocumentHelper.GetAltoDocument(_ocrResponse)"/>
-                        </MudTabPanel>
-                        <MudTabPanel Text="Gotho BlazorPdf" Icon="@Icons.Material.Filled.PictureAsPdf" Disabled="true">
-                            <MudAltoPdfViewer FileContent="@_fileContent" AltoData="OcrResponsesToAltoDocumentHelper.GetAltoDocument(_ocrResponse)" />
-                        </MudTabPanel>
-                        <MudTabPanel Text="Just open PDF in an IFrame" Icon="@Icons.Material.Filled.PictureAsPdf">
-                            <MudSimplePdfViewer FileContent="@_fileContent" />
-                        </MudTabPanel>
-                    </MudTabs>
-                </MudPaper>
-                <MudPaper Width="45%" Height="70%">
-                    <MudOcrDetailsViewer OcrResponse="_ocrResponse"/>
-                </MudPaper>
-            </MudStack>
-        </MudTabPanel>
+    <MudPaper Height="100%" Width="100%">
+        <MudTabs>
+            <MudTabPanel Text="PDF" Icon="@Icons.Material.Filled.PictureAsPdf">
+                <MudStack Row="true" AlignItems="AlignItems.Start">
+                    <MudPaper Width="45%" Height="100%" Class="pdf-container">
+                        <MudTabs>
+                            <MudTabPanel Text="Gotho BlazorPdf" Icon="@Icons.Material.Filled.PictureAsPdf" Class="pdf-container">
+                                <MudAltoPdfViewer FileContent="@_fileContent" AltoData="OcrResponsesToAltoDocumentHelper.GetAltoDocument(_ocrResponse)" Class="pdf-container"/>
+                            </MudTabPanel>
+                            <MudTabPanel Text="PDF.js" Icon="@Icons.Material.Filled.PictureAsPdf">
+                                <MudPdfJsViewer FileContent="@_fileContent" AltoData="OcrResponsesToAltoDocumentHelper.GetAltoDocument(_ocrResponse)" Class="pdf-container"/>
+                            </MudTabPanel>
+                            <MudTabPanel Text="Just open PDF in an IFrame" Icon="@Icons.Material.Filled.PictureAsPdf">
+                                <MudSimplePdfViewer FileContent="@_fileContent" Class="pdf-container"/>
+                            </MudTabPanel>
+                        </MudTabs>
+                    </MudPaper>
+                    <MudPaper Width="45%" Height="100%">
+                        <MudOcrDetailsViewer OcrResponse="_ocrResponse" Style="height: auto"/>
+                    </MudPaper>
+                </MudStack>
+            </MudTabPanel>
 
-        <MudTabPanel Text="Alto" Icon="@Icons.Material.Filled.Code">
-            <StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="ConstructionOptions" CssClass="MudCodeEditor" />
-        </MudTabPanel>
-    </MudTabs>
+            <MudTabPanel Text="Alto" Icon="@Icons.Material.Filled.Code">
+                <StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="ConstructionOptions" CssClass="MudCodeEditor" />
+            </MudTabPanel>
+        </MudTabs>
+    </MudPaper>
 }
 
 @code {

@@ -1,17 +1,13 @@
-﻿@using Frank.Apps.Ocr.WebApp.Models.AltoXml
+﻿@using Frank.Apps.Ocr.WebApp.Models
+@using Frank.Apps.Ocr.WebApp.Models.AltoXml
 @using Gotho.BlazorPdf
+
+@inject IJSRuntime JS
+
 @inherits MudComponentBase
 
-<MudPaper Class="pdf-container" Style="position: relative;">
+<MudPaper Class="pdf-container">
     <PdfViewer Url="@PdfDataUrl" Height="100%" OnDocumentLoaded="@DocumentLoaded" OnPageChanged="@PageChanged" />
-    <div id="pdf-viewer-overlay">
-        @foreach (var overlay in PageOverlays)
-        {
-            <MudElement
-                Class="ocr-overlay"
-                Style="@overlay.ToStyleString()" />
-        }
-    </div>
 </MudPaper>
 
 @code {
@@ -75,22 +71,44 @@
         public double Height { get; set; }
         public string BackgroundColor { get; set; } = "rgba(255, 255, 0, 0.3)";
 
-        public string ToStyleString()
-        {
-            return $"position: absolute; " +
-                   $"left: {Left}px; " +
-                   $"top: {Top}px; " +
-                   $"width: {Width}px; " +
-                   $"height: {Height}px; " +
-                   $"background-color: {BackgroundColor};";
-        }
+        public string ToStyleString() =>
+            $"position: relative; " +
+            $"left: {Left}px; " +
+            $"top: {Top}px; " +
+            $"width: {Width}px; " +
+            $"height: {Height}px; " +
+            $"background-color: {BackgroundColor};";
     }
 
     private void DocumentLoaded(PdfViewerEventArgs obj) => SelectOverlays(obj.CurrentPage);
     private void PageChanged(PdfViewerEventArgs obj) => SelectOverlays(obj.CurrentPage);
 
-    private void SelectOverlays(int objCurrentPage) =>
+    private void SelectOverlays(int objCurrentPage)
+    {
         PageOverlays = OcrOverlays
             .Where(x => x.Page == objCurrentPage)
             .ToList();
+        
+        DrawRectangleOnCanvas(objCurrentPage).GetAwaiter().GetResult();
+    }
+
+    private async Task DrawRectangleOnCanvas(int pageNumber)
+    {
+        var scale = await JS.InvokeAsync<double>("pdfViewer.getCurrentScale");
+        var overlays = OcrOverlays
+            .Where(x => x.Page == pageNumber)
+            .Select(x => new CanvasRect
+            {
+                X = x.Left * scale,
+                Y = x.Top * scale,
+                Width = x.Width * scale,
+                Height = x.Height * scale
+            })
+            .ToList();
+
+        foreach (var rect in overlays)
+        {
+            await JS.InvokeVoidAsync("pdfViewer.drawRectangleOnCanvas", rect);
+        }
+    }
 }

@@ -2,6 +2,8 @@
 @using Frank.Apps.Ocr.WebApp.Models.AltoXml
 @inject IJSRuntime JS
 
+@inherits MudComponentBase
+
 <MudPaper Class="pdf-container" Style="position: relative;">
     <canvas id="pdfCanvas"></canvas>
     <MudButton OnClick="PrevPage">Previous</MudButton>
