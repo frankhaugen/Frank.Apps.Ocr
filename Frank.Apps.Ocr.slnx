@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path=".github/workflows/merge.yml" />
+    <File Path=".github/workflows/pull-request.yml" />
+    <File Path=".github/workflows/release.yml" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="icon.png" />
+    <File Path="LICENSE" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Frank.Apps.Ocr.Api/Frank.Apps.Ocr.Api.csproj" />
+  <Project Path="Frank.Apps.Ocr.WebApp/Frank.Apps.Ocr.WebApp.csproj" />
+</Solution>
